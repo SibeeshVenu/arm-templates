@@ -1,0 +1,92 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "rgName": {
+            "value": ""
+        },
+        "customTags": {
+            "value": {
+                "Environment Name": "",
+                "Environment Type": "",
+                "Product family": ""
+            }
+        },
+        "storageAccountType": {
+            "value": "Standard_LRS"
+        },
+        "containerName": {
+            "value": ""
+        },
+        "webAppName": {
+            "value": ""
+        },
+        "location": {
+            "value": ""
+        },
+        "sku": {
+            "value": "B1"
+        },
+        "linuxFxVersion": {
+            "value": "DOTNETCORE|3.1"
+        },
+        "repoUrl": {
+            "value": " "
+        },
+        "sqlAdministratorLogin": {
+            "value": ""
+        },
+        "sqlAdministratorLoginPassword": {
+            "value": ""
+        },
+        "transparentDataEncryption": {
+            "value": "Enabled"
+        },
+        "keyvaultname": {
+            "value": ""
+        },
+        "enabledfortemplatedeployment": {
+            "value": true
+        },
+        "enabledForDeployment": {
+            "value": false
+        },
+        "enabledForDiskEncryption": {
+            "value": false
+        },
+        "tenantid": {
+            "value": ""
+        },
+        "objectid": {
+            "value": ""
+        },
+        "keyspermissions": {
+            "value": [
+                "list"
+            ]
+        },
+        "secretspermissions": {
+            "value": [
+                "list"
+            ]
+        },
+        "dbConnectionName": {
+            "value": "DefaultConnection"
+        },
+        "storageConnectionName": {
+            "value": "StorageConnectionString"
+        },
+        "partnercenterApplicationSecretName": {
+            "value": "partnercenterApplicationSecret"
+        },
+        "partnercenterApplicationSecretValue": {
+            "value": ""
+        },
+        "graphSecretName": {
+            "value": "GraphClientSecret"
+        },
+        "graphSecretValue": {
+            "value": ""
+        }
+    }
+}

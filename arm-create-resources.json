@@ -1,0 +1,403 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "customTags": {
+      "type": "object"
+    },
+    "storageAccountType": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    },
+    "containerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the blob container."
+      }
+    },
+    "webAppName": {
+      "type": "string",
+      "minLength": 2,
+      "metadata": {
+        "description": "Web app name."
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "sku": {
+      "type": "string",
+      "metadata": {
+        "description": "The SKU of App Service Plan."
+      }
+    },
+    "linuxFxVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "The Runtime stack of current web app"
+      }
+    },
+    "repoUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Optional Git Repo URL"
+      }
+    },
+    "sqlAdministratorLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "The administrator username of the SQL Server."
+      }
+    },
+    "sqlAdministratorLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The administrator password of the SQL Server."
+      }
+    },
+    "transparentDataEncryption": {
+      "type": "string",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ],
+      "defaultValue": "Enabled",
+      "metadata": {
+        "description": "Enable or disable Transparent Data Encryption (TDE) for the database."
+      }
+    },
+    "keyvaultname": {
+      "type": "string",
+      "metadata": {
+        "description": "specifies the name of the key vault."
+      }
+    },
+    "enabledfortemplatedeployment": {
+      "type": "bool",
+      "allowedvalues": [
+        true,
+        false
+      ],
+      "metadata": {
+        "description": "specifies whether azure resource manager is permitted to retrieve secrets from the key vault."
+      }
+    },
+    "enabledForDeployment": {
+      "type": "bool",
+      "allowedValues": [
+        true,
+        false
+      ],
+      "metadata": {
+        "description": "Specifies whether Azure Virtual Machines are permitted to retrieve certificates stored as secrets from the key vault."
+      }
+    },
+    "enabledForDiskEncryption": {
+      "type": "bool",
+      "allowedValues": [
+        true,
+        false
+      ],
+      "metadata": {
+        "description": "Specifies whether Azure Disk Encryption is permitted to retrieve secrets from the vault and unwrap keys."
+      }
+    },
+    "tenantid": {
+      "type": "string",
+      "metadata": {
+        "description": "specifies the azure active directory tenant id that should be used for authenticating requests to the key vault. get it by using get-azsubscription cmdlet."
+      }
+    },
+    "objectid": {
+      "type": "string",
+      "metadata": {
+        "description": "specifies the object id of a user, service principal or security group in the azure active directory tenant for the vault. the object id must be unique for the list of access policies. get it by using get-azaduser or r cmdlets."
+      }
+    },
+    "keyspermissions": {
+      "type": "array",
+      "metadata": {
+        "description": "specifies the permissions to keys in the vault. valid values are: all, encrypt, decrypt, wrapkey, unwrapkey, sign, verify, get, list, create, update, import, delete, backup, restore, recover, and purge."
+      }
+    },
+    "secretspermissions": {
+      "type": "array",
+      "metadata": {
+        "description": "specifies the permissions to secrets in the vault. valid values are: all, get, list, set, delete, backup, restore, recover, and purge."
+      }
+    },
+    "graphSecretValue": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the secret used to connect to the Graph"
+      }
+    },
+    "dbConnectionName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the connection string we use"
+      }
+    },
+    "storageConnectionName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the connection string of storage account"
+      }
+    },
+    "rgName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the resource group"
+      }
+    },
+    "partnercenterApplicationSecretName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the partner center secret"
+      }
+    },
+    "graphSecretName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the graph secret"
+      }
+    },
+    "partnercenterApplicationSecretValue": {
+      "type": "string",
+      "metadata": {
+        "description": "Value of the partner center secret"
+      }
+    }
+  },
+  "variables": {
+    "appServicePlanPortalName": "[concat('AppServicePlan-', parameters('webAppName'))]",
+    "storageAccountName": "[concat('store', parameters('webAppName'))]",
+    "sqlServerName": "[concat('dbserver', parameters('webAppName'))]",
+    "databaseName": "[concat('db', parameters('webAppName'))]",
+    "databaseEdition": "Basic",
+    "databaseCollation": "SQL_Latin1_General_CP1_CI_AS",
+    "databaseServiceObjectiveName": "Basic"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('appServicePlanPortalName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('sku')]"
+      },
+      "kind": "linux",
+      "properties": {
+        "reserved": true
+      },
+      "tags": "[parameters('customTags')]"
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('webAppName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('customTags')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanPortalName'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanPortalName'))]",
+        "siteConfig": {
+          "linuxFxVersion": "[parameters('linuxFxVersion')]"
+        },
+        "resources": [
+          {
+            "condition": "[contains(parameters('repoUrl'),'http')]",
+            "type": "sourcecontrols",
+            "apiVersion": "2020-06-01",
+            "name": "web",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+              "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+            ],
+            "properties": {
+              "repoUrl": "[parameters('repoUrl')]",
+              "branch": "master",
+              "isManualIntegration": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "kind": "StorageV2",
+      "properties": {},
+      "tags": "[parameters('customTags')]",
+      "resources": [
+        {
+          "type": "blobServices/containers",
+          "apiVersion": "2019-06-01",
+          "name": "[concat('default/', parameters('containerName'))]",
+          "dependsOn": [
+            "[variables('storageAccountName')]"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "[variables('sqlServerName')]",
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2020-02-02-preview",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('customTags')]",
+      "properties": {
+        "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "name": "[variables('databaseName')]",
+          "type": "databases",
+          "apiVersion": "2020-02-02-preview",
+          "location": "[parameters('location')]",
+          "tags": "[parameters('customTags')]",
+          "sku": {
+            "name": "GP_S_Gen5_1"
+          },
+          "properties": {
+            "edition": "[variables('databaseEdition')]",
+            "collation": "[variables('databaseCollation')]",
+            "requestedServiceObjectiveName": "[variables('databaseServiceObjectiveName')]",
+            "autoPauseDelay": 60
+          },
+          "dependsOn": [
+            "[variables('sqlServerName')]"
+          ],
+          "resources": [
+            {
+              "comments": "Transparent Data Encryption",
+              "name": "current",
+              "type": "transparentDataEncryption",
+              "apiVersion": "2017-03-01-preview",
+              "properties": {
+                "status": "[parameters('transparentDataEncryption')]"
+              },
+              "dependsOn": [
+                "[variables('databaseName')]"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "AllowAllMicrosoftAzureIps",
+          "type": "firewallrules",
+          "apiVersion": "2020-02-02-preview",
+          "location": "[parameters('location')]",
+          "properties": {
+            "endIpAddress": "0.0.0.0",
+            "startIpAddress": "0.0.0.0"
+          },
+          "dependsOn": [
+            "[variables('sqlServerName')]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2019-09-01",
+      "name": "[parameters('keyVaultName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('customTags')]",
+      "properties": {
+        "enabledForDeployment": "[parameters('enabledForDeployment')]",
+        "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
+        "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
+        "tenantId": "[parameters('tenantId')]",
+        "accessPolicies": [
+          {
+            "objectId": "[parameters('objectId')]",
+            "tenantId": "[parameters('tenantId')]",
+            "permissions": {
+              "keys": "[parameters('keysPermissions')]",
+              "secrets": "[parameters('secretsPermissions')]"
+            }
+          }
+        ],
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        },
+        "networkAcls": {
+          "defaultAction": "Allow",
+          "bypass": "AzureServices"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2019-09-01",
+      "name": "[concat(parameters('keyVaultName'), '/', parameters('dbConnectionName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "value": "[concat('Server=tcp:',reference(variables('sqlServerName')).fullyQualifiedDomainName,',1433;Initial Catalog=',variables('databaseName'),';Persist Security Info=False;User ID=',reference(variables('sqlServerName')).administratorLogin,';Password=',parameters('sqlAdministratorLoginPassword'),';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2019-09-01",
+      "name": "[concat(parameters('keyVaultName'), '/', parameters('storageConnectionName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(resourceId(parameters('rgName'),'Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-04-01').keys[0].value,';EndpointSuffix=core.windows.net')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2019-09-01",
+      "name": "[concat(parameters('keyVaultName'), '/', parameters('partnercenterApplicationSecretName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "value": "[parameters('partnercenterApplicationSecretValue')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2019-09-01",
+      "name": "[concat(parameters('keyVaultName'), '/', parameters('graphSecretName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "value": "[parameters('graphSecretValue')]"
+      }
+    }
+  ]
+}
